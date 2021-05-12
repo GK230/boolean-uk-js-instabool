@@ -1,21 +1,29 @@
 // write your code here
-fetch("http://localhost:3000/images")
-.then(function (response) {
-    return response.json()
-})
-.then(function (images) {
-    createCardImages(images)
-})
+function getData () {
 
-function createCardImages(images) {
+    fetch("http://localhost:3000/images")
+        .then(function (response) {
+            return response.json()
+        })
+        .then(function (images) {
+            createCards(images)
+        })
+}
+
+function createCards(images) {
 
     for (image of images) {
+        createSingleCard(image)
+    }
+}
 
-        const articleEl = document.createElement('article')
-        articleEl.setAttribute("class", ".image-card")
+function createSingleCard(image) {
+
+    const articleEl = document.createElement('article')
+        articleEl.setAttribute("class", "image-card")
 
         const titleEl = document.createElement('h2')
-        titleEl.setAttribute("class", ".title")
+        titleEl.setAttribute("class", "title")
 
         titleEl.innerText = image.title
 
@@ -25,68 +33,96 @@ function createCardImages(images) {
         imageEl.setAttribute("alt", image.title)
 
         const likesSecEl = document.createElement('div')
-        likesSecEl.setAttribute("class", ".likes-section")
+        likesSecEl.setAttribute("class", "likes-section")
 
         const likesSpan = document.createElement('span')
-        likesSpan.setAttribute("class", ".likes")
+        likesSpan.setAttribute("class", "likes")
         likesSpan.innerText = image.likes
 
         const likesBtn = document.createElement('button')
-        likesBtn.setAttribute("class", ".like-button")
+        likesBtn.setAttribute("class", "like-button")
         likesBtn.innerText = "♥"
+        likesBtn.addEventListener('click', function () {
+            updateLikes(image)
+        }) 
 
         likesSecEl.append(likesSpan, likesBtn)
 
-        articleEl.append(titleEl, imageEl, likesSecEl)
+        const ulEl = document.createElement('ul')
+        ulEl.setAttribute('class', 'comments')
+        for (comment of image.comments) {
+            const liEl = document.createElement('li')
+            liEl.innerText = comment.content
+            ulEl.append(liEl)
+        }
+
+        const commentFormEl = document.createElement('form')
+        commentFormEl.setAttribute('class', 'comment-form')
+        commentFormEl.addEventListener('submit', function (event) {
+            event.preventDefault();
+            const comment = event.target.comment.value
+            addComment(image, comment)
+            commentFormEl.reset()
+        })
+
+        const inputEl = document.createElement('input')
+        inputEl.setAttribute('class', 'comment-input')
+        inputEl.setAttribute('type', 'text')
+        inputEl.setAttribute('name', 'comment')
+        inputEl.setAttribute('placeholder', 'Add a comment...')
+
+        const btnEl = document.createElement('button')
+        btnEl.setAttribute('class', 'comment-button')
+        btnEl.setAttribute('type', 'submit')
+        btnEl.innerText = "Post"
+
+        commentFormEl.append(inputEl, btnEl)
+
+        articleEl.append(titleEl, imageEl, likesSecEl, ulEl, commentFormEl)
         secEl = document.querySelector('.image-container')
         secEl.append(articleEl)
-    }
 }
 
-fetch("http://localhost:3000/comments")
-.then(function (response) {
-    return response.json()
-})
-.then(function (comments) {
-    createCardComments(comments)
-})
+function updateLikes(image) {
 
-function createCardComments(comments) {
+    image.likes++
 
-    const commentListEl = document.createElement('ul')
-    commentListEl.setAttribute("class", "comments")
+    fetch(`http://localhost:3000/images/${image.id}`, {
+        method: 'PATCH',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ likes: image.likes })
+      }).then(function() {
+          const likesSpan = document.querySelector('.likes')
+          likesSpan.innerText = image.likes
+      })
+}
 
-    const listItemEl = document.createElement('li')
-    
+function addComment(image, comment) {
+
+    image.comments.push(comment)
+    let theComment = {imageId: image.id, content: comment}
+
+    fetch(`http://localhost:3000/images/${image.id}`, {
+        method: 'PATCH',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ comments.push(theComment) 
+        })
+      }).then(function() {
+        const commentsEl = document.querySelector('.comments')
+        console.log(commentsEl)
+
+        let commentItemEl = document.createElement('li')
+        commentItemEl.innerText = comment
+        commentsEl.append(commentItemEl)
+    })
+
 }
 
 
-        
-
-    
 
 
-
-
-    // <!-- <article class="image-card">
-    //     <h2 class="title">Title of image goes here</h2>
-    //     <img src="./assets/image-placeholder.jpg" class="image" />
-    //     <div class="likes-section">
-    //       <span class="likes">0 likes</span>
-    //       <button class="like-button">♥</button>
-    //     </div>
-    //     <ul class="comments">
-    //       <li>Get rid of these comments</li>
-    //       <li>And replace them with the real ones</li>
-    //       <li>From the server</li>
-    //     </ul>
-    //     <form class="comment-form">
-    //       <input
-    //         class="comment-input"
-    //         type="text"
-    //         name="comment"
-    //         placeholder="Add a comment..."
-    //       />
-    //       <button class="comment-button" type="submit">Post</button>
-    //     </form>
-    //   </article> -->
+getData()
